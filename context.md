@@ -16,8 +16,9 @@ Persistent memory for this project. Read this first in every new session. Update
 
 - **Stack:** Vite + React 19 + TypeScript, React Router (`react-router-dom`), plain CSS with CSS variables, Vitest for tests, oxlint for linting. Client-only (no backend); all math runs in the browser.
 - **State management:** React local state (`useState`) only, for now.
-- **Visualization system:** not built yet. Planned: hand-rolled SVG (Phase 2).
-- **Formulas:** KaTeX planned for Phase 2 (not installed yet).
+- **Visualization system:** hand-rolled SVG (decided Phase 2). `InteractiveGraph` draws axes and passes scales to its children via a render prop; `ScatterPlot` adds draggable points. The graph measures its container (`useElementWidth`) and draws at real pixel size so text stays readable on phones.
+- **Formulas:** KaTeX (`katex` 0.19) via `FormulaDisplay`. Highlightable symbols use `\htmlData{var=w}{w}`; only that one command is trusted.
+- **Data flow pattern:** the parent owns the state (points, w, b); children are "controlled": they receive values + `onChange`. Derived values (predictions, MSE) are recomputed each render, never stored.
 
 ```text
 src/
@@ -28,9 +29,17 @@ src/
 ├── pages/
 │   ├── HomePage.tsx          landing page with slogan + category cards
 │   └── TopicPage.tsx         ONE page that serves every topic (/topic/:topicId)
-├── components/TopicTemplate/
-│   ├── TopicTemplate.tsx     renders header + jump-nav + the 10 numbered sections from a TopicContent
-│   └── sections.ts           the 10 section definitions (key + title); loop source for the template
+├── components/
+│   ├── TopicTemplate/        TopicTemplate.tsx (header + jump-nav + 10 sections), sections.ts (the 10 definitions)
+│   ├── Graph/                InteractiveGraph.tsx (axes, scales, clipping, toData), ScatterPlot.tsx (draggable points)
+│   ├── Slider/               ParameterSlider.tsx (labelled, controlled, hover/focus highlight callback)
+│   ├── Formula/              FormulaDisplay.tsx (KaTeX + variable highlighting)
+│   └── MetricCard/           MetricCard.tsx (one live number)
+├── pages/ComponentLabPage.tsx   /lab: developer test bench wiring all components together (not a lesson)
+├── lib/
+│   ├── graph/scale.ts        linearScale (+invert), ticks, clamp (pure, tested)
+│   ├── hooks/useElementWidth.ts   custom hook: measures an element with ResizeObserver
+│   └── format.ts             formatNumber (NaN/Infinity -> "—")
 ├── data/topics/
 │   ├── topics.ts             TOPIC REGISTRY: categories -> topics (id, title, summary, status)
 │   └── topics.test.ts        registry + template-structure tests
@@ -72,20 +81,41 @@ Empty folders from the blueprint (`components/Graph`, `Slider`, etc.) are intent
 - 5 new tests (registry id uniqueness, slugify, available-topics <-> lessons match, related ids valid, 10 unique sections). 8 tests total.
 - Not yet covered: the blueprint's What/Why/When/How/Math/Intuition/Tradeoffs "quick answers" idea. Section 01 currently carries what/why/when in prose. Decide in a later phase whether it needs its own component.
 
+### Phase 2 — Interactive mathematics engine (core set, complete)
+- Owner chose: hand-written SVG, KaTeX, and the **core component set** only (not all ~17 blueprint components).
+- Built: `InteractiveGraph`, `ScatterPlot` (drag with mouse/touch/arrow keys, clamped to the axes), `ParameterSlider`, `FormulaDisplay` (symbol highlighting), `MetricCard`; pure `linearScale`/`ticks`/`clamp`; `mse`; `formatNumber`; `useElementWidth`.
+- `/lab` page proves them together: drag dots or move w/b, the line, formula highlight and MSE all update.
+- Responsive fix found in testing: a fixed-size SVG scaled down made phone axis text ~6px. Graph now draws at container width (min 260, max 760, height = 0.62 x width).
+- Lint-driven design change: `toData(element, clientX, clientY)` finds the parent `<svg>` from the dragged element, so no ref is read during render.
+- Tests: 20 unit tests. Browser (emulated Edge via DevTools protocol): 19 checks incl. hand-calculated MSE for two (w,b) settings, line pixel position vs scale math, mouse + touch drag, keyboard nudge, clamping, hover highlight, no console warnings.
+- Not built (deferred until a topic needs them): DistributionPlot, DecisionBoundary, ConfusionMatrix, Heatmap, VectorVisualizer, AnimationController, Timeline, StepVisualizer, DataPoint/PredictionLine/ResidualLine as separate components (Phase 3 will decide whether residuals are an overlay or a component).
+
 ## 4. Current phase
 
-- **Phase 1 done.** Waiting for the owner's go-ahead for **Phase 2 (interactive mathematics engine: reusable graph, slider, formula components)**.
-- Remaining before Phase 2: nothing.
+- **Phase 2 done.** Waiting for the owner's go-ahead for **Phase 3 (Linear Regression, the first flagship interactive lesson)**.
+- Remaining before Phase 3: nothing.
 
 ## 5. Interactive components
 
-None yet (Phase 2). Planned reusable set: InteractiveGraph, ParameterSlider, FormulaDisplay, FormulaVariableHighlight, ScatterPlot, DistributionPlot, DecisionBoundary, ConfusionMatrix, Heatmap, MetricCard, AnimationController, Timeline, VectorVisualizer, StepVisualizer.
+**Built (Phase 2):**
+| Component | Props (main) | Notes |
+|---|---|---|
+| `InteractiveGraph` | `xDomain`, `yDomain`, `xLabel`, `yLabel`, `ariaLabel`, `children(ctx)` | ctx = `{xScale, yScale, toData, innerWidth, innerHeight}`; clips children to the plot area |
+| `ScatterPlot` | `points`, `onPointsChange?`, domains, labels, `overlay?(ctx)` | draggable only if `onPointsChange` given; `role="slider"` + arrow keys |
+| `ParameterSlider` | `label`, `value`, `min`, `max`, `step`, `onChange`, `onHighlightChange?` | controlled; highlight fires on hover/focus |
+| `FormulaDisplay` | `tex`, `activeVariable?`, `ariaLabel?` | wrap symbols as `\htmlData{var=w}{w}` |
+| `MetricCard` | `label`, `value`, `hint?`, `digits?` | shows "—" for NaN |
+
+**Planned, not built:** DistributionPlot, DecisionBoundary, ConfusionMatrix, Heatmap, AnimationController, Timeline, VectorVisualizer, StepVisualizer, residual/prediction-line helpers.
 
 ## 6. Mathematical formulas
 
 | Formula | Meaning | Variables | Where |
 |---|---|---|---|
 | mean = (x1 + ... + xn) / n | average value | xi = values, n = count; empty list returns NaN | `src/lib/math/stats.ts` |
+| MSE = (1/n) * sum((y - yhat)^2) | average squared prediction error | y = actual, yhat = predicted, n = count; NaN for empty or mismatched lengths | `src/lib/math/stats.ts` (used by `/lab`) |
+| yhat = w*x + b | straight-line prediction | w = slope, b = intercept | `ComponentLabPage.tsx` (full lesson in Phase 3) |
+| pixel = r0 + (v - d0)/(d1 - d0) * (r1 - r0) | linear scale: data value to screen position | domain [d0,d1], range [r0,r1]; inverse for dragging | `src/lib/graph/scale.ts` |
 
 ## 7. Design system
 
@@ -96,7 +126,8 @@ None yet (Phase 2). Planned reusable set: InteractiveGraph, ParameterSlider, For
 - **Buttons:** `.button`, solid accent purple, darker on hover.
 - **Motion:** `--duration-fast` 150ms, `--duration-normal` 300ms.
 - **Focus:** visible 3px focus ring on all interactive elements.
-- Graph styles: not defined yet.
+- **Graphs:** tokens `--color-graph-bg/grid/axis/text/point/line/highlight` in `tokens.css`; styles in `styles/components/graph.css`. Points purple, the line lighter purple, and pink (`--color-graph-highlight`) marks "the thing being explained" (highlighted line, active formula symbol). Axis text 13px, line 3px, dot radius 7 (hit area 18 for fingers).
+- **Controls:** sliders use native `<input type="range">` with `accent-color`; metric cards use `--color-surface-soft`; styles in `controls.css`.
 - Dark mode: not implemented (Phase 19 candidate).
 
 ## 8. Future work
@@ -107,6 +138,8 @@ Backlog: choose graph tech (hand-rolled SVG vs library) in Phase 2; add KaTeX; d
 ## 9. Known bugs / unverified items
 
 - Mobile layout and drawer were click-tested in an emulated 390px Edge viewport (14 checks passed). Not yet tried on a physical phone or in Safari/Firefox.
+- Browser tests (drag, touch, keyboard, hover) live in throwaway scripts outside the repo, so they are not re-run automatically. Consider adding Playwright or a component-test setup before the final polish phase.
+- Graph minimum width is 260px; narrower containers would overflow. Not an issue on common phones (>=320px).
 - The anchor-vs-sticky-header offset (`scroll-margin-top: 5rem`) could not be proven in tests because the current lesson page is short (the browser can't scroll the target to the top). Re-check once lessons are longer.
 - Sidebar has no scroll-position memory and is long (52 entries); consider collapsible categories later.
 
@@ -121,6 +154,11 @@ Backlog: choose graph tech (hand-rolled SVG vs library) in Phase 2; add KaTeX; d
 - **No AI attribution / co-author** anywhere in the repo or commits (owner's absolute rule). Commits use the owner's configured git identity.
 - **Lessons are data, not pages (Phase 1):** a lesson is a typed `TopicContent` object; layout lives only in `TopicTemplate`. Why: every topic looks consistent, restyling touches one component, and content authors never write layout. Alternative rejected: one hand-built page component per topic (would duplicate structure 50 times).
 - **Fixed 10 sections, optional content:** the structure is always visible even when a lesson is incomplete, so progress is easy to see.
+- **Hand-written SVG over a charting library (Phase 2):** dragging points, residual lines and decision boundaries need full control, and writing it teaches the owner how interactive graphs work. Trade-off: more code per chart type.
+- **Core component set only (Phase 2):** build other components when a topic needs them, so their design is driven by real use.
+- **Render prop for graph content:** `InteractiveGraph` takes a function child so any topic can draw anything on shared axes/scales.
+- **Lab page `/lab`:** a permanent developer test bench so components can be exercised outside lessons. Visible in the sidebar under "Developer"; revisit whether to hide it in the final polish phase.
+- **Graph draws at real pixel size, not a scaled viewBox:** keeps text readable on phones.
 - **Phase-by-phase workflow:** stop after each phase, report, ask before the next.
 
 ## Programming Concepts Learned
@@ -157,5 +195,21 @@ Status key: *introduced* = explained by Claude; *understood* = owner confirmed o
 | `key` prop in lists | Lets React tell list items apart when redrawing | `TopicTemplate.tsx` | introduced |
 | In-page anchors | `href="#id"` jumps to the element with that id | `TopicTemplate.tsx`, `topic.css` | introduced |
 | Tests that guard data | Tests that check the registry (unique ids, valid links), not just math | `topics.test.ts` | introduced |
+
+### Phase 2
+| Concept | Short explanation | Where | Status |
+|---|---|---|---|
+| Scales (data <-> pixels) | A function turning a data value into a screen position, plus its inverse for mouse input | `lib/graph/scale.ts` | introduced |
+| Render props | Passing a *function* as a child so the receiver calls it with data | `InteractiveGraph.tsx` `children(ctx)` | introduced |
+| Controlled components | Child stores nothing; parent passes `value` + `onChange` (single source of truth) | `ParameterSlider.tsx`, `ScatterPlot.tsx` | introduced |
+| Derived state | Compute values (predictions, MSE) from state each render instead of storing them | `ComponentLabPage.tsx` | introduced |
+| Pointer events + pointer capture | One event model for mouse/touch/pen; capture keeps events flowing while dragging | `ScatterPlot.tsx` | introduced |
+| SVG coordinate system | Y grows downward; `viewBox`; `transform=translate`; clipPath | `InteractiveGraph.tsx` | introduced |
+| Custom hook | A reusable function bundling `useState` + `useEffect` | `lib/hooks/useElementWidth.ts` | introduced |
+| `useMemo` | Cache a computed value until its inputs change | `FormulaDisplay.tsx` | introduced |
+| `useRef` | A handle to a real DOM element (read in effects/handlers, not during render) | `FormulaDisplay.tsx`, `useElementWidth.ts` | introduced |
+| `dangerouslySetInnerHTML` | Insert raw HTML; safe only for trusted, self-generated content | `FormulaDisplay.tsx` | introduced |
+| Accessibility basics | `aria-label`, `role="slider"`, keyboard arrows, visible focus | `ScatterPlot.tsx`, `ParameterSlider.tsx` | introduced |
+| Testing in a real browser | Driving Edge via DevTools protocol to click/drag; verifying against hand-calculated numbers | scratch scripts (not in repo) | introduced |
 
 Concepts the owner asked to revisit: none yet.

@@ -3,6 +3,8 @@
 @import './components/layout.css';
 @import './components/card.css';
 @import './components/topic.css';
+@import './components/graph.css';
+@import './components/controls.css';
 
 *,
 *::before,

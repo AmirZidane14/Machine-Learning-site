@@ -64,6 +64,12 @@ export default function Layout() {
             ))}
           </section>
         ))}
+        <section>
+          <h2 className="sidebar__category">Developer</h2>
+          <NavLink to="/lab" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={closeMenu}>
+            Component lab
+          </NavLink>
+        </section>
       </nav>
 
       <main className="main-content">

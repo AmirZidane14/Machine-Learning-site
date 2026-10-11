@@ -38,6 +38,15 @@
   --color-focus: var(--purple-400);
   --color-backdrop: rgba(46, 28, 92, 0.45);
 
+  /* ---- Graph colors (used by every chart) ---- */
+  --color-graph-bg: #fcfbff;
+  --color-graph-grid: var(--purple-100);
+  --color-graph-axis: var(--purple-300);
+  --color-graph-text: var(--color-text-muted);
+  --color-graph-point: var(--purple-600);
+  --color-graph-line: var(--purple-400);
+  --color-graph-highlight: #e0529c; /* contrasting pink for the thing being explained */
+
   /* ---- Typography ---- */
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;

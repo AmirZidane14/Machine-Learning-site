@@ -1,0 +1,78 @@
+/* Sliders, formulas and metric cards. */
+
+/* ---- ParameterSlider ---- */
+.slider {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast);
+}
+
+.slider:hover,
+.slider:focus-within {
+  background: var(--color-accent-soft);
+}
+
+.slider__header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+  font-weight: 600;
+}
+
+.slider__value {
+  font-family: var(--font-mono);
+  color: var(--color-accent-hover);
+}
+
+.slider input[type='range'] {
+  width: 100%;
+  accent-color: var(--color-accent);
+}
+
+/* ---- FormulaDisplay ---- */
+.formula {
+  overflow-x: auto; /* long formulas scroll sideways instead of breaking the page on phones */
+  padding: var(--space-2) 0;
+}
+
+.formula-var--active {
+  color: var(--color-graph-highlight);
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
+}
+
+/* ---- MetricCard ---- */
+.metric-card {
+  padding: var(--space-4);
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-md);
+}
+
+.metric-card__label {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.metric-card__value {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-heading);
+}
+
+.metric-card__hint {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* A row of cards / controls that wraps on small screens. */
+.control-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}

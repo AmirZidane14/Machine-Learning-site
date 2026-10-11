@@ -1,0 +1,79 @@
+/* Graph styles. Colors come from the --color-graph-* tokens. */
+
+/* The wrapper is what we measure; it fills the available width. */
+.graph-wrap {
+  width: 100%;
+}
+
+.graph {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--color-graph-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  /* Dragging a point must not scroll the page on touch screens. */
+  touch-action: none;
+}
+
+.graph__bg {
+  fill: var(--color-graph-bg);
+}
+
+.graph__grid {
+  stroke: var(--color-graph-grid);
+  stroke-width: 1;
+}
+
+.graph__axis {
+  stroke: var(--color-graph-axis);
+  stroke-width: 2;
+}
+
+.graph__tick,
+.graph__label {
+  fill: var(--color-graph-text);
+  font-size: 13px;
+}
+
+.graph__label {
+  font-weight: 600;
+}
+
+.graph__line {
+  stroke: var(--color-graph-line);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke var(--duration-fast);
+}
+
+.graph__line--highlight {
+  stroke: var(--color-graph-highlight);
+}
+
+.scatter__dot {
+  fill: var(--color-graph-point);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.scatter__hit {
+  fill: transparent;
+}
+
+.scatter__point--draggable {
+  cursor: grab;
+}
+
+.scatter__point--draggable:active {
+  cursor: grabbing;
+}
+
+.scatter__point:focus-visible {
+  outline: none;
+}
+
+.scatter__point:focus-visible .scatter__dot {
+  stroke: var(--color-focus);
+  stroke-width: 4;
+}

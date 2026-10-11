@@ -1,0 +1,126 @@
+# ML Explorer — Project Context
+
+Persistent memory for this project. Read this first in every new session. Update it after every completed phase.
+
+## 1. Project vision
+
+**ML Explorer** is an interactive machine-learning laboratory for beginners. Instead of reading formulas, the learner drags points, turns sliders and watches the model and its metrics change, then reads *why*.
+
+- **Slogan: "Move the model, see the math."** (The original blueprint said "See the math. Move the model."; the owner changed it. See Important decisions.)
+- **Audience:** a beginner who knows very little ML. Every symbol should eventually be explained.
+- **Problem solved:** textbooks show formulas; learners can't feel them. Here every concept is manipulable, visual, and tied to a real-world example.
+- **Learning loop:** Concept -> Intuition -> Interaction -> Mathematics -> Visual consequence -> Real-world example -> Exam understanding.
+- **Principle:** depth over breadth. A few excellent interactive topics beat many shallow ones.
+
+## 2. Current architecture
+
+- **Stack:** Vite + React 19 + TypeScript, React Router (`react-router-dom`), plain CSS with CSS variables, Vitest for tests, oxlint for linting. Client-only (no backend); all math runs in the browser.
+- **State management:** React local state (`useState`) only, for now.
+- **Visualization system:** not built yet. Planned: hand-rolled SVG (Phase 2).
+- **Formulas:** KaTeX planned for Phase 2 (not installed yet).
+
+```text
+src/
+├── main.tsx                  entry point; mounts <App/> inside <BrowserRouter>
+├── app/
+│   ├── App.tsx               route table (URL -> page)
+│   └── Layout.tsx            shell: sidebar nav (built from the registry) + mobile drawer + <Outlet/>
+├── pages/
+│   ├── HomePage.tsx          landing page with slogan + category cards
+│   └── TopicPage.tsx         ONE page that serves every topic (/topic/:topicId)
+├── data/topics/topics.ts     TOPIC REGISTRY: categories -> topics (id, title, summary, status)
+├── topics/
+│   ├── index.ts              maps topic id -> lesson component
+│   └── what-is-machine-learning/WhatIsMachineLearning.tsx   placeholder lesson
+├── lib/math/
+│   ├── stats.ts              pure math (currently just mean)
+│   └── stats.test.ts         unit tests
+└── styles/
+    ├── global.css            reset, base elements, .button
+    ├── theme/tokens.css      ALL colors/fonts/spacing/shadows/motion as CSS variables
+    └── components/           layout.css, card.css
+```
+
+Empty folders from the blueprint (`components/Graph`, `Slider`, etc.) are intentionally **not** created yet; they are added in Phase 2 when there is something to put in them.
+
+**How a topic plugs in:** add it to `topics.ts` (sidebar + URL appear automatically), build its component, register it in `src/topics/index.ts`. Unregistered topics show a "Coming soon" card.
+
+## 3. Completed phases
+
+### Phase 0 — Foundation & architecture (complete, pending owner review)
+- Scaffolded Vite React-TS in the project root; removed starter demo files.
+- Theme tokens (purple/lavender), global styles, card/badge/button base styles.
+- App shell: responsive sidebar (drawer under 800px), Home page, generic TopicPage, 404 fallback.
+- Topic registry covering the **entire target topic tree** (8 categories, 52 topics); only "What is Machine Learning?" is `available` (placeholder text).
+- Vitest + first math function (`mean`) with 3 tests.
+- Decisions: see section 10. Files: everything under `src/`, config files, this file.
+
+## 4. Current phase
+
+- **Phase 0 done.** Waiting for the owner's go-ahead for **Phase 1 (topic page template: the 10-section learning structure)**.
+- Remaining before Phase 1: nothing.
+
+## 5. Interactive components
+
+None yet (Phase 2). Planned reusable set: InteractiveGraph, ParameterSlider, FormulaDisplay, FormulaVariableHighlight, ScatterPlot, DistributionPlot, DecisionBoundary, ConfusionMatrix, Heatmap, MetricCard, AnimationController, Timeline, VectorVisualizer, StepVisualizer.
+
+## 6. Mathematical formulas
+
+| Formula | Meaning | Variables | Where |
+|---|---|---|---|
+| mean = (x1 + ... + xn) / n | average value | xi = values, n = count; empty list returns NaN | `src/lib/math/stats.ts` |
+
+## 7. Design system
+
+- **Colors:** purple scale `--purple-50` (#f7f4ff) to `--purple-900` (#2e1c5c) in `src/styles/theme/tokens.css`. Components use only semantic tokens (`--color-bg`, `--color-surface`, `--color-text`, `--color-accent`, `--color-heading`, ...).
+- **Typography:** system font stack (no web fonts yet); mono stack for code. Sizes `--text-sm` .. `--text-hero`.
+- **Spacing:** `--space-1` (4px) .. `--space-12` (48px).
+- **Cards:** white surface, 1px lavender border, `--radius-md`, soft purple shadow (`.card`). Badges: `.badge`.
+- **Buttons:** `.button`, solid accent purple, darker on hover.
+- **Motion:** `--duration-fast` 150ms, `--duration-normal` 300ms.
+- **Focus:** visible 3px focus ring on all interactive elements.
+- Graph styles: not defined yet.
+- Dark mode: not implemented (Phase 19 candidate).
+
+## 8. Future work
+
+Phases 1-20 per the master blueprint: topic template, interactive math engine, Linear Regression, Gradient Descent, Statistics lab, Bayes, Classification, Evaluation, Decision Trees, K-Means, Hierarchical, DBSCAN, PCA, Neural Networks, Case studies, Learning path, "Explain this" mode, Exam mode, Design personalization, Final polish.
+Backlog: choose graph tech (hand-rolled SVG vs library) in Phase 2; add KaTeX; dark mode.
+
+## 9. Known bugs / unverified items
+
+- Mobile layout verified at 700px wide only. At 390px the headless-browser screenshot looked cropped, probably a headless-Edge minimum window width, but this is **unconfirmed**. Re-check on a real phone or DevTools device mode.
+- The mobile drawer open/close interaction was **not** tested (headless screenshots can't click). Test manually.
+- Sidebar has no scroll-position memory and is long (52 entries); consider collapsible categories later.
+
+## 10. Important decisions
+
+- **Slogan changed** to "Move the model, see the math." per the owner.
+- **Start fresh, React + Vite + TypeScript:** the "existing prototype" in the blueprint was not available; owner chose a rebuild. React gives reusable components; TypeScript catches mistakes early.
+- **Single TopicPage + registry:** one route serves all topics from data, so adding a topic never touches the router or sidebar.
+- **CSS variables for all styling:** so a full restyle (Phase 19) means editing `tokens.css`, not hunting through components.
+- **Math in `src/lib/math`, UI-free:** pure functions are testable and reusable by every topic.
+- **Two different topics share a title** ("Gradient Descent" in Optimization and Neural Networks), so the NN ones get explicit ids (`nn-gradient-descent`, `nn-loss`).
+- **No AI attribution / co-author** anywhere in the repo or commits (owner's absolute rule). Commits use the owner's configured git identity.
+- **Phase-by-phase workflow:** stop after each phase, report, ask before the next.
+
+## Programming Concepts Learned
+
+Status key: *introduced* = explained by Claude; *understood* = owner confirmed or demonstrated. Nothing is marked understood yet.
+
+### Phase 0
+| Concept | Short explanation | Where | Status |
+|---|---|---|---|
+| Component | A function that returns a piece of UI | every `.tsx` file | introduced |
+| JSX | HTML-looking syntax inside JavaScript | `.tsx` files | introduced |
+| State (`useState`) | Memory a component keeps; changing it redraws the component | `Layout.tsx` (drawer open/closed) | introduced |
+| Props / URL params | Inputs to a component; `useParams` reads the URL | `TopicPage.tsx` | introduced |
+| Routing | Mapping URLs to pages without reloading | `App.tsx`, `Layout.tsx` (`Outlet`, `NavLink`) | introduced |
+| Data-driven UI (`.map`) | Build many elements by looping over a list | `Layout.tsx`, `HomePage.tsx` | introduced |
+| TypeScript types/interfaces | Describe the shape of data so mistakes are caught early | `topics.ts` | introduced |
+| Modules (`import`/`export`) | Splitting code across files | all files | introduced |
+| CSS variables | Named values reused everywhere; change once, update all | `tokens.css` | introduced |
+| Pure functions & unit tests | Same input -> same output; tests check it automatically | `stats.ts`, `stats.test.ts` | introduced |
+| Responsive CSS (media query) | Different layout below a width | `layout.css` (800px) | introduced |
+
+Concepts the owner asked to revisit: none yet.

@@ -35,9 +35,11 @@ src/
 │   ├── Slider/               ParameterSlider.tsx (labelled, controlled, hover/focus highlight callback)
 │   ├── Formula/              FormulaDisplay.tsx (KaTeX + variable highlighting)
 │   └── MetricCard/           MetricCard.tsx (one live number)
+├── components/FloatingShapes/   FloatingShapes.tsx (hero decoration: drift + dodge/wobble), shapes.ts (shape data)
 ├── pages/ComponentLabPage.tsx   /lab: developer test bench wiring all components together (not a lesson)
 ├── lib/
 │   ├── graph/scale.ts        linearScale (+invert), ticks, clamp (pure, tested)
+│   ├── motion/dodge.ts       dodgeOffset: pointer + shape position -> push vector (pure, tested)
 │   ├── hooks/useElementWidth.ts   custom hook: measures an element with ResizeObserver
 │   └── format.ts             formatNumber (NaN/Infinity -> "—")
 ├── data/topics/
@@ -90,6 +92,18 @@ Empty folders from the blueprint (`components/Graph`, `Slider`, etc.) are intent
 - Tests: 20 unit tests. Browser (emulated Edge via DevTools protocol): 19 checks incl. hand-calculated MSE for two (w,b) settings, line pixel position vs scale math, mouse + touch drag, keyboard nudge, clamping, hover highlight, no console warnings.
 - Not built (deferred until a topic needs them): DistributionPlot, DecisionBoundary, ConfusionMatrix, Heatmap, VectorVisualizer, AnimationController, Timeline, StepVisualizer, DataPoint/PredictionLine/ResidualLine as separate components (Phase 3 will decide whether residuals are an overlay or a component).
 
+### Owner-requested UI addition (between Phase 2 and Phase 3): hero floating shapes
+- Owner feedback: "the UI feels bland and has no movement." Chose: shapes on the **Home hero only**, behavior **drift gently, then dodge/wobble on hover** (not draggable, not cursor-following).
+- `FloatingShapes` (8 shapes: circle, ring, triangle, square, plus) sits beside the hero text (stacked below it under 800px). Shape list is pure data in `shapes.ts`.
+- Each shape = 4 nested layers so transforms don't fight: `.shape` (position) > `.shape__dodge` (JS-set `--dx/--dy` + springy transition) > `.shape__drift` (CSS keyframes) > `.shape__body` (visual + wobble when `.shape--near`).
+- Dodge math is a pure tested function: `lib/motion/dodge.ts` (`dodgeOffset`; radius 130px, max push 70px, linear falloff).
+- JS writes CSS variables directly (not React state) because pointer-move fires dozens of times per second.
+- Accessibility: field is `aria-hidden`; `prefers-reduced-motion` disables drift, wobble, and dodge.
+- Touch: `pointerleave` fires the instant a finger lifts, so only mouse resets on leave; touch shapes settle via a 700ms timer. (Found by a failing browser test.)
+- Tokens added: `--color-shape-1..4`, `--duration-slow`, `--ease-spring`.
+- Tests: 6 new unit tests (26 total); 17 browser checks (drift, dodge direction/magnitude, far shape unaffected, settle-back, reduced motion, layout/no overlap/button not blocked, touch tap, no console warnings).
+- Revisit in Phase 19 (design personalization): more motion elsewhere (card hover lift, page transitions) was NOT added; only the hero got movement.
+
 ## 4. Current phase
 
 - **Phase 2 done.** Waiting for the owner's go-ahead for **Phase 3 (Linear Regression, the first flagship interactive lesson)**.
@@ -124,7 +138,8 @@ Empty folders from the blueprint (`components/Graph`, `Slider`, etc.) are intent
 - **Spacing:** `--space-1` (4px) .. `--space-12` (48px).
 - **Cards:** white surface, 1px lavender border, `--radius-md`, soft purple shadow (`.card`). Badges: `.badge`.
 - **Buttons:** `.button`, solid accent purple, darker on hover.
-- **Motion:** `--duration-fast` 150ms, `--duration-normal` 300ms.
+- **Motion:** `--duration-fast` 150ms, `--duration-normal` 300ms, `--duration-slow` 700ms, `--ease-spring` (overshoots then settles). All animation must respect `prefers-reduced-motion`.
+- **Decorative shapes:** `--color-shape-1..4` (lavender, mid purple, pale lavender, soft pink). Shapes are decoration only: `aria-hidden`, never block text or buttons.
 - **Focus:** visible 3px focus ring on all interactive elements.
 - **Graphs:** tokens `--color-graph-bg/grid/axis/text/point/line/highlight` in `tokens.css`; styles in `styles/components/graph.css`. Points purple, the line lighter purple, and pink (`--color-graph-highlight`) marks "the thing being explained" (highlighted line, active formula symbol). Axis text 13px, line 3px, dot radius 7 (hit area 18 for fingers).
 - **Controls:** sliders use native `<input type="range">` with `accent-color`; metric cards use `--color-surface-soft`; styles in `controls.css`.
@@ -138,6 +153,8 @@ Backlog: choose graph tech (hand-rolled SVG vs library) in Phase 2; add KaTeX; d
 ## 9. Known bugs / unverified items
 
 - Mobile layout and drawer were click-tested in an emulated 390px Edge viewport (14 checks passed). Not yet tried on a physical phone or in Safari/Firefox.
+- **Unexplained one-off:** a single `npm run test` run (right after editing `FloatingShapes.tsx`, with the dev server up) reported all 4 test files as failed with `TypeError: Cannot read properties of undefined (reading 'config')` thrown inside Vitest. Re-running (with and without the dev server) passed 26/26 each time, and it did not recur. Cause not identified; if it reappears, note the exact sequence.
+- Shape motion can only be judged by eye; automated checks verify the mechanics (positions, classes, reset), not whether it *feels* good. Tune `DODGE_RADIUS` / `MAX_PUSH` in `FloatingShapes.tsx` and the keyframes in `shapes.css`.
 - Browser tests (drag, touch, keyboard, hover) live in throwaway scripts outside the repo, so they are not re-run automatically. Consider adding Playwright or a component-test setup before the final polish phase.
 - Graph minimum width is 260px; narrower containers would overflow. Not an issue on common phones (>=320px).
 - The anchor-vs-sticky-header offset (`scroll-margin-top: 5rem`) could not be proven in tests because the current lesson page is short (the browser can't scroll the target to the top). Re-check once lessons are longer.
@@ -211,5 +228,17 @@ Status key: *introduced* = explained by Claude; *understood* = owner confirmed o
 | `dangerouslySetInnerHTML` | Insert raw HTML; safe only for trusted, self-generated content | `FormulaDisplay.tsx` | introduced |
 | Accessibility basics | `aria-label`, `role="slider"`, keyboard arrows, visible focus | `ScatterPlot.tsx`, `ParameterSlider.tsx` | introduced |
 | Testing in a real browser | Driving Edge via DevTools protocol to click/drag; verifying against hand-calculated numbers | scratch scripts (not in repo) | introduced |
+
+### Floating shapes (hero)
+| Concept | Short explanation | Where | Status |
+|---|---|---|---|
+| Layered transforms | Two animations can't share one `transform`, so each gets its own nested element | `FloatingShapes.tsx`, `shapes.css` | introduced |
+| CSS keyframe animation | `@keyframes` + `animation` for endless motion with no JS | `shapes.css` (`shape-drift`, `shape-wobble`) | introduced |
+| CSS custom properties as a JS-to-CSS channel | JS sets `--dx`; CSS reads it with `var()` and animates the change | `FloatingShapes.tsx`, `shapes.css` | introduced |
+| Refs for direct DOM updates | Skip React state for high-frequency events; mutate the element's style directly | `FloatingShapes.tsx` (`shapeRefs`) | introduced |
+| Easing curves (`cubic-bezier`) | Shapes the feel of motion; values >1 overshoot for a bouncy settle | `tokens.css` (`--ease-spring`) | introduced |
+| `prefers-reduced-motion` | Honor the OS setting by turning animation off | `shapes.css`, `FloatingShapes.tsx` | introduced |
+| Mouse vs touch pointer behavior | `pointerType`; touch fires `pointerleave` on lift, mouse has hover | `FloatingShapes.tsx` | introduced |
+| Pure function for "feel" math | Isolating tunable math makes it testable without a browser | `lib/motion/dodge.ts` | introduced |
 
 Concepts the owner asked to revisit: none yet.

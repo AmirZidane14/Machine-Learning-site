@@ -38,6 +38,12 @@
   --color-focus: var(--purple-400);
   --color-backdrop: rgba(46, 28, 92, 0.45);
 
+  /* ---- Decorative shape colors (hero) ---- */
+  --color-shape-1: var(--purple-300);
+  --color-shape-2: var(--purple-500);
+  --color-shape-3: var(--purple-200);
+  --color-shape-4: #f08fc0; /* soft pink accent, a lighter cousin of the graph highlight */
+
   /* ---- Graph colors (used by every chart) ---- */
   --color-graph-bg: #fcfbff;
   --color-graph-grid: var(--purple-100);
@@ -72,6 +78,8 @@
   --shadow-card: 0 2px 10px rgba(95, 55, 184, 0.08);
   --duration-fast: 150ms;
   --duration-normal: 300ms;
+  --duration-slow: 700ms;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* overshoots slightly, then settles: feels bouncy */
 
   /* ---- Layout ---- */
   --sidebar-width: 280px;

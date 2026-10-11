@@ -5,6 +5,7 @@
 @import './components/topic.css';
 @import './components/graph.css';
 @import './components/controls.css';
+@import './components/shapes.css';
 
 *,
 *::before,

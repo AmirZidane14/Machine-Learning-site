@@ -36,6 +36,7 @@
   --color-accent-soft: var(--purple-100);
   --color-on-accent: #ffffff;
   --color-focus: var(--purple-400);
+  --color-backdrop: rgba(46, 28, 92, 0.45);
 
   /* ---- Typography ---- */
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

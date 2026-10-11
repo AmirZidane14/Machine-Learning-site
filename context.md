@@ -54,6 +54,7 @@ Empty folders from the blueprint (`components/Graph`, `Slider`, etc.) are intent
 - Topic registry covering the **entire target topic tree** (8 categories, 52 topics); only "What is Machine Learning?" is `available` (placeholder text).
 - Vitest + first math function (`mean`) with 3 tests.
 - Decisions: see section 10. Files: everything under `src/`, config files, this file.
+- **Follow-up fix (owner-reported):** the open mobile drawer covered the Menu button, so it could only be dismissed by tapping a link. Added a "Close" button inside the drawer, a tap-to-close backdrop (`--color-backdrop` token), and Escape-key closing via `useEffect`. Files: `Layout.tsx`, `layout.css`, `tokens.css`. z-index order: topbar 10 < backdrop 15 < sidebar 20.
 
 ## 4. Current phase
 
@@ -89,8 +90,7 @@ Backlog: choose graph tech (hand-rolled SVG vs library) in Phase 2; add KaTeX; d
 
 ## 9. Known bugs / unverified items
 
-- Mobile layout verified at 700px wide only. At 390px the headless-browser screenshot looked cropped, probably a headless-Edge minimum window width, but this is **unconfirmed**. Re-check on a real phone or DevTools device mode.
-- The mobile drawer open/close interaction was **not** tested (headless screenshots can't click). Test manually.
+- Mobile layout and drawer were click-tested in an emulated 390px Edge viewport (14 checks passed). Not yet tried on a physical phone or in Safari/Firefox.
 - Sidebar has no scroll-position memory and is long (52 entries); consider collapsible categories later.
 
 ## 10. Important decisions
@@ -122,5 +122,8 @@ Status key: *introduced* = explained by Claude; *understood* = owner confirmed o
 | CSS variables | Named values reused everywhere; change once, update all | `tokens.css` | introduced |
 | Pure functions & unit tests | Same input -> same output; tests check it automatically | `stats.ts`, `stats.test.ts` | introduced |
 | Responsive CSS (media query) | Different layout below a width | `layout.css` (800px) | introduced |
+| `useEffect` + cleanup | Runs code after the screen draws; the returned function undoes it (here: add/remove the Escape-key listener) | `Layout.tsx` | introduced |
+| Conditional rendering | `{menuOpen && <div/>}` only creates the element when the condition is true | `Layout.tsx` (backdrop) | introduced |
+| Stacking order (`z-index`) | Higher number draws on top; a layer can hide controls beneath it | `layout.css` | introduced |
 
 Concepts the owner asked to revisit: none yet.

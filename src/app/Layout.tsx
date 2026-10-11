@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { categories } from '../data/topics/topics'
 
@@ -10,6 +10,17 @@ export default function Layout() {
   // State: remembers whether the mobile drawer is open. Changing it redraws this component.
   const [menuOpen, setMenuOpen] = useState(false)
   const closeMenu = () => setMenuOpen(false)
+
+  // Effect: while the menu is open, listen for the Escape key. The returned function is the
+  // "cleanup": React runs it when the menu closes, so we never leave listeners behind.
+  useEffect(() => {
+    if (!menuOpen) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [menuOpen])
 
   return (
     <div className="app-shell">
@@ -25,7 +36,13 @@ export default function Layout() {
         <span>ML Explorer</span>
       </header>
 
+      {/* Backdrop: dim layer behind the open drawer. Tapping outside the menu closes it. */}
+      {menuOpen && <div className="backdrop" onClick={closeMenu} aria-hidden="true" />}
+
       <nav id="sidebar" className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`} aria-label="Topics">
+        <button className="sidebar__close" onClick={closeMenu}>
+          ✕ Close
+        </button>
         <Link className="sidebar__brand" to="/" onClick={closeMenu}>
           ML Explorer
         </Link>

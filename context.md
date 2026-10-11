@@ -28,22 +28,30 @@ src/
 ├── pages/
 │   ├── HomePage.tsx          landing page with slogan + category cards
 │   └── TopicPage.tsx         ONE page that serves every topic (/topic/:topicId)
-├── data/topics/topics.ts     TOPIC REGISTRY: categories -> topics (id, title, summary, status)
+├── components/TopicTemplate/
+│   ├── TopicTemplate.tsx     renders header + jump-nav + the 10 numbered sections from a TopicContent
+│   └── sections.ts           the 10 section definitions (key + title); loop source for the template
+├── data/topics/
+│   ├── topics.ts             TOPIC REGISTRY: categories -> topics (id, title, summary, status)
+│   └── topics.test.ts        registry + template-structure tests
 ├── topics/
-│   ├── index.ts              maps topic id -> lesson component
-│   └── what-is-machine-learning/WhatIsMachineLearning.tsx   placeholder lesson
+│   ├── types.ts              TopicContent: the shape of one lesson (10 fields)
+│   ├── index.ts              maps topic id -> TopicContent
+│   └── what-is-machine-learning/content.tsx   first real lesson (data only, no layout code)
 ├── lib/math/
 │   ├── stats.ts              pure math (currently just mean)
 │   └── stats.test.ts         unit tests
 └── styles/
     ├── global.css            reset, base elements, .button
     ├── theme/tokens.css      ALL colors/fonts/spacing/shadows/motion as CSS variables
-    └── components/           layout.css, card.css
+    └── components/           layout.css, card.css, topic.css
 ```
 
 Empty folders from the blueprint (`components/Graph`, `Slider`, etc.) are intentionally **not** created yet; they are added in Phase 2 when there is something to put in them.
 
-**How a topic plugs in:** add it to `topics.ts` (sidebar + URL appear automatically), build its component, register it in `src/topics/index.ts`. Unregistered topics show a "Coming soon" card.
+**How a topic plugs in:** (1) add it to `topics.ts` and set `status: 'available'` (sidebar + URL appear automatically); (2) write `src/topics/<id>/content.tsx` exporting a `TopicContent`; (3) register it in `src/topics/index.ts`. `TopicPage` hands the content to `TopicTemplate`. Topics without content show a "Coming soon" card. A test enforces that "available" topics and registered lessons match.
+
+**Template rules:** all 10 sections always render. A field a lesson omits shows a "Coming in a later phase" placeholder. `mistakes` / `examFacts` are string arrays (bulleted); `related` is a list of topic ids (links; unknown ids are dropped, and a test fails on them). Everything else is `ReactNode`, so from Phase 2 a section can hold an interactive component.
 
 ## 3. Completed phases
 
@@ -56,10 +64,18 @@ Empty folders from the blueprint (`components/Graph`, `Slider`, etc.) are intent
 - Decisions: see section 10. Files: everything under `src/`, config files, this file.
 - **Follow-up fix (owner-reported):** the open mobile drawer covered the Menu button, so it could only be dismissed by tapping a link. Added a "Close" button inside the drawer, a tap-to-close backdrop (`--color-backdrop` token), and Escape-key closing via `useEffect`. Files: `Layout.tsx`, `layout.css`, `tokens.css`. z-index order: topbar 10 < backdrop 15 < sidebar 20.
 
+### Phase 1 — Learning experience / topic template (complete)
+- `TopicContent` type + `TopicTemplate` component render the blueprint's 10 sections: What problem does this solve? / Intuition / Interactive simulation / Mathematics / Move the parameters / Watch the model change / Real-world example / Common mistakes / Exam-interview facts / Related topics.
+- Numbered section cards, a "jump to section" chip bar (in-page anchors), and `scroll-margin-top` so anchor targets clear the sticky mobile top bar.
+- Replaced the Phase 0 placeholder component with `what-is-machine-learning/content.tsx` (real text for sections 01, 02, 07, 08, 09, 10; 03-06 are placeholders until interactive components exist).
+- `topics/index.ts` now maps id -> `TopicContent` (was id -> component). `TopicPage` uses the template.
+- 5 new tests (registry id uniqueness, slugify, available-topics <-> lessons match, related ids valid, 10 unique sections). 8 tests total.
+- Not yet covered: the blueprint's What/Why/When/How/Math/Intuition/Tradeoffs "quick answers" idea. Section 01 currently carries what/why/when in prose. Decide in a later phase whether it needs its own component.
+
 ## 4. Current phase
 
-- **Phase 0 done.** Waiting for the owner's go-ahead for **Phase 1 (topic page template: the 10-section learning structure)**.
-- Remaining before Phase 1: nothing.
+- **Phase 1 done.** Waiting for the owner's go-ahead for **Phase 2 (interactive mathematics engine: reusable graph, slider, formula components)**.
+- Remaining before Phase 2: nothing.
 
 ## 5. Interactive components
 
@@ -91,6 +107,7 @@ Backlog: choose graph tech (hand-rolled SVG vs library) in Phase 2; add KaTeX; d
 ## 9. Known bugs / unverified items
 
 - Mobile layout and drawer were click-tested in an emulated 390px Edge viewport (14 checks passed). Not yet tried on a physical phone or in Safari/Firefox.
+- The anchor-vs-sticky-header offset (`scroll-margin-top: 5rem`) could not be proven in tests because the current lesson page is short (the browser can't scroll the target to the top). Re-check once lessons are longer.
 - Sidebar has no scroll-position memory and is long (52 entries); consider collapsible categories later.
 
 ## 10. Important decisions
@@ -102,6 +119,8 @@ Backlog: choose graph tech (hand-rolled SVG vs library) in Phase 2; add KaTeX; d
 - **Math in `src/lib/math`, UI-free:** pure functions are testable and reusable by every topic.
 - **Two different topics share a title** ("Gradient Descent" in Optimization and Neural Networks), so the NN ones get explicit ids (`nn-gradient-descent`, `nn-loss`).
 - **No AI attribution / co-author** anywhere in the repo or commits (owner's absolute rule). Commits use the owner's configured git identity.
+- **Lessons are data, not pages (Phase 1):** a lesson is a typed `TopicContent` object; layout lives only in `TopicTemplate`. Why: every topic looks consistent, restyling touches one component, and content authors never write layout. Alternative rejected: one hand-built page component per topic (would duplicate structure 50 times).
+- **Fixed 10 sections, optional content:** the structure is always visible even when a lesson is incomplete, so progress is easy to see.
 - **Phase-by-phase workflow:** stop after each phase, report, ask before the next.
 
 ## Programming Concepts Learned
@@ -125,5 +144,18 @@ Status key: *introduced* = explained by Claude; *understood* = owner confirmed o
 | `useEffect` + cleanup | Runs code after the screen draws; the returned function undoes it (here: add/remove the Escape-key listener) | `Layout.tsx` | introduced |
 | Conditional rendering | `{menuOpen && <div/>}` only creates the element when the condition is true | `Layout.tsx` (backdrop) | introduced |
 | Stacking order (`z-index`) | Higher number draws on top; a layer can hide controls beneath it | `layout.css` | introduced |
+
+### Phase 1
+| Concept | Short explanation | Where | Status |
+|---|---|---|---|
+| Props | Inputs a parent passes to a component, like function arguments | `TopicTemplate.tsx` (`topic`, `content`) | introduced |
+| TypeScript `interface` as a contract | Declares what fields an object must have; optional fields use `?` | `topics/types.ts` | introduced |
+| `ReactNode` | Type meaning "anything React can display" (text, JSX, components) | `types.ts` | introduced |
+| Data-driven rendering, again | Loop over a list of definitions instead of writing 10 sections by hand | `sections.ts`, `TopicTemplate.tsx` | introduced |
+| `switch` + type narrowing | Different handling per key; TypeScript knows each branch's type | `renderBody` in `TopicTemplate.tsx` | introduced |
+| JSX fragments (`<>...</>`) | Group elements without adding an extra HTML tag | `content.tsx` | introduced |
+| `key` prop in lists | Lets React tell list items apart when redrawing | `TopicTemplate.tsx` | introduced |
+| In-page anchors | `href="#id"` jumps to the element with that id | `TopicTemplate.tsx`, `topic.css` | introduced |
+| Tests that guard data | Tests that check the registry (unique ids, valid links), not just math | `topics.test.ts` | introduced |
 
 Concepts the owner asked to revisit: none yet.

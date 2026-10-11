@@ -1,0 +1,78 @@
+/* Styles for the topic lesson template. Colors/sizes all come from theme tokens. */
+
+.topic__header {
+  margin-bottom: var(--space-6);
+}
+
+.topic__summary {
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+}
+
+/* "Jump to section" chips */
+.topic__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
+}
+
+.topic__nav a {
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.topic__nav a:hover {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+/* Each numbered section is a card. */
+.topic-section {
+  margin-bottom: var(--space-6);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  /* When jumped to via an anchor, leave room for the sticky mobile top bar. */
+  scroll-margin-top: 5rem;
+}
+
+.topic-section__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--text-lg);
+  color: var(--color-heading);
+}
+
+.topic-section__number {
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+}
+
+.topic-list {
+  margin: 0;
+  padding-left: var(--space-6);
+}
+
+.topic-list li + li {
+  margin-top: var(--space-2);
+}
+
+.topic-placeholder {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+  color: var(--color-text-muted);
+  font-style: italic;
+}

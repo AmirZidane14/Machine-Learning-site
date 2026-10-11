@@ -1,10 +1,11 @@
 import { Link, useParams } from 'react-router-dom'
+import TopicTemplate from '../components/TopicTemplate/TopicTemplate'
 import { getTopicById } from '../data/topics/topics'
-import { topicComponents } from '../topics'
+import { topicContents } from '../topics'
 
 /*
   One page component serves EVERY topic. useParams() reads the :topicId part of the URL,
-  we look the topic up in the registry, then show its lesson component if one exists.
+  we look the topic up in the registry, then hand its content to the shared template.
 */
 export default function TopicPage() {
   const { topicId } = useParams()
@@ -20,19 +21,19 @@ export default function TopicPage() {
     )
   }
 
-  const Lesson = topicComponents[topic.id]
+  const content = topicContents[topic.id]
 
-  return (
-    <div className="page">
-      <h1>{topic.title}</h1>
-      {Lesson ? (
-        <Lesson />
-      ) : (
+  if (!content) {
+    return (
+      <div className="page">
+        <h1>{topic.title}</h1>
         <div className="card">
           <span className="badge">Coming soon</span>
           <p>{topic.summary}</p>
         </div>
-      )}
-    </div>
-  )
+      </div>
+    )
+  }
+
+  return <TopicTemplate topic={topic} content={content} />
 }

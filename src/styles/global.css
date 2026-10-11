@@ -2,6 +2,7 @@
 @import './theme/tokens.css';
 @import './components/layout.css';
 @import './components/card.css';
+@import './components/topic.css';
 
 *,
 *::before,
